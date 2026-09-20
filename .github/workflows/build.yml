@@ -1,17 +1,34 @@
-name: Build mobile app
+name: Build Android APK
 
 on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-android:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-      - run: npm install
-      - run: npx expo-doctor
-      - run: npx expo export --platform android
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Expo doctor
+        run: npx expo-doctor
+
+      - name: Generate Android project
+        run: npx expo prebuild --platform android --non-interactive
+
+      - name: Build release APK
+        working-directory: android
+        run: ./gradlew assembleRelease
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: chenbom-customer-daily-report-android
+          path: android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
