@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "name": "承邦客服日報",
+    "slug": "chenbom-customer-daily-report-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "android": {"package": "tw.cbtrade.customerdailyreport"},
+    "ios": {"bundleIdentifier": "tw.cbtrade.customerdailyreport"},
+    "plugins": []
+  }
+}
