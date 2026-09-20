@@ -24,7 +24,7 @@ jobs:
         run: |
           xcodebuild \
             -workspace *.xcworkspace \
-            -scheme "承邦客服日報" \
+            -scheme app \
             -configuration Debug \
             -sdk iphonesimulator \
             -derivedDataPath build \
