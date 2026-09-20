@@ -1,0 +1,42 @@
+name: Build iOS Simulator
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build-ios-simulator:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: Expo doctor
+        run: npx expo-doctor
+      - name: Generate iOS project
+        run: npx expo prebuild --platform ios --non-interactive
+      - name: Build iOS Simulator app
+        working-directory: ios
+        run: |
+          xcodebuild \
+            -workspace *.xcworkspace \
+            -scheme "承邦客服日報" \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
+      - name: Package Simulator app
+        run: |
+          mkdir -p ios-artifact
+          cp -R ios/build/Build/Products/Debug-iphonesimulator/*.app ios-artifact/
+      - name: Upload iOS Simulator app
+        uses: actions/upload-artifact@v4
+        with:
+          name: chenbom-customer-daily-report-ios-simulator
+          path: ios-artifact
+          if-no-files-found: error
