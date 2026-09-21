@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initializeApp, getApps, getApp, deleteApp } from 'firebase/app';
 import { getAuth, signInAnonymously, setPersistence, browserLocalPersistence } from 'firebase/auth';
-import { getFirestore, collection, doc, setDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { getFirestore, collection, doc, setDoc, getDocs, query, orderBy, limit, deleteDoc } from 'firebase/firestore';
 
 const CONFIG_KEY='chenbom_firebase_config_v1';
 let appInstance=null, authInstance=null, dbInstance=null, currentUid=null, currentConfigKey=null;
@@ -71,6 +71,14 @@ export async function saveExportRecord(record){
   if(!cfg) throw new Error('尚未設定 Firebase');
   await init(cfg);
   await setDoc(doc(dbInstance,'users',currentUid,'export_history',String(record.id)),record);
+}
+
+export async function deleteExportRecord(id){
+  const cfg=await loadCloudConfig();
+  if(!cfg) return false;
+  await init(cfg);
+  await deleteDoc(doc(dbInstance,'users',currentUid,'export_history',String(id)));
+  return true;
 }
 
 export async function loadExportRecordsFromCloud(){
