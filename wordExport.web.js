@@ -1,166 +1,145 @@
 import {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-  WidthType, AlignmentType, BorderStyle
+  WidthType, AlignmentType, BorderStyle, VerticalAlignTable
 } from 'docx';
 
 const FONT='Microsoft JhengHei';
+const BORDER={style:BorderStyle.SINGLE,size:1,color:'000000'};
+const BORDERS={top:BORDER,bottom:BORDER,left:BORDER,right:BORDER};
 
 const tx=(text,bold=false,size=22)=>new TextRun({
-  text:String(text??''), bold, size,
-  font:{name:FONT,eastAsia:FONT}
+  text:String(text??''),bold,size,
+  font:{name:FONT,eastAsia:FONT,ascii:FONT,hAnsi:FONT}
 });
 
-const cell=(value,bold=false)=>new TableCell({
-  children:[new Paragraph({children:[tx(value,bold,20)]})],
-  borders:{
-    top:{style:BorderStyle.SINGLE,size:4,color:'D1D5DB'},
-    bottom:{style:BorderStyle.SINGLE,size:4,color:'D1D5DB'},
-    left:{style:BorderStyle.SINGLE,size:4,color:'D1D5DB'},
-    right:{style:BorderStyle.SINGLE,size:4,color:'D1D5DB'}
+const p=(text='',center=false,bold=false)=>new Paragraph({
+  children:[tx(text,bold,22)],
+  alignment:center?AlignmentType.CENTER:AlignmentType.LEFT,
+  spacing:{before:0,after:0,line:240}
+});
+
+const cell=(children,{columnSpan,rowSpan,width,center=false}={})=>new TableCell({
+  children:Array.isArray(children)?children:[p(children,center)],
+  width:width?{size:width,type:WidthType.PERCENTAGE}:undefined,
+  columnSpan,
+  rowSpan,
+  verticalAlign:VerticalAlignTable.CENTER,
+  margins:{top:100,bottom:100,left:100,right:100},
+  borders:BORDERS
+});
+
+const textCell=(text,opts={})=>cell(p(text,opts.center??true,opts.bold??false),opts);
+
+const lines=(v)=>String(v||'').split(/\n/).map(x=>x.trim()).filter(Boolean);
+const displayDate=(date)=>{
+  const m=String(date||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m?m[2]+'/'+m[3]:String(date||'');
+};
+const fileDate=(date)=>{
+  const m=String(date||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m?m[1]+m[2]+m[3]:String(date||'').replace(/\D/g,'');
+};
+const activityText=(v)=>lines(v).join('\n');
+
+function makeActivityRow(title,detail){
+  return new TableRow({
+    cantSplit:true,
+    children:[
+      cell(p(title,true,true),{columnSpan:2,width:25}),
+      cell(lines(detail).map(x=>p(x,false,false)),{width:75})
+    ]
+  });
+}
+
+function makeSectionRow(title){
+  return new TableRow({
+    cantSplit:true,
+    children:[
+      cell(p('   '+title,false,false),{columnSpan:3})
+    ]
+  });
+}
+
+function buildTemplateDoc({date,data,tasks}){
+  const morning=lines(data.morningTasks);
+  const afternoon=lines(data.afternoonTasks);
+
+  const rows=[];
+
+  // 第一列完全依照使用者提供的「20260903工作日誌.docx」結構：
+  // 標題＋日期、時間／上午／下午、工作細項、工廠聯繫進度、業務工廠回覆。
+  rows.push(new TableRow({
+    cantSplit:true,
+    children:[
+      cell(p('承邦有限公司   客服工作日報表',true,true),{columnSpan:2,width:25}),
+      cell(p(displayDate(date),false,false),{width:75})
+    ]
+  }));
+
+  rows.push(new TableRow({
+    cantSplit:true,
+    children:[
+      cell(p('時間',true,false),{rowSpan:2,width:10}),
+      cell([p('上午',true,false),p('0830-1200',true,false)],{width:15}),
+      cell(morning.length?morning.map(x=>p(x,true,true)):[p('',true,true)],{width:75})
+    ]
+  }));
+
+  rows.push(new TableRow({
+    cantSplit:true,
+    children:[
+      cell([p('下午',true,false),p('1300-1730',true,false)],{width:15}),
+      cell(afternoon.length?afternoon.map(x=>p(x,true,true)):[p('',true,true)],{width:75})
+    ]
+  }));
+
+  for(const task of tasks){
+    rows.push(makeActivityRow(task,data.taskDetailsMap?.[task]||''));
   }
-});
 
-const lines=(v)=>String(v||'').split('\n').filter(Boolean);
+  if((data.factoryDetails||[]).length){
+    rows.push(makeSectionRow('工廠聯繫進度'));
+    for(const f of data.factoryDetails){
+      if((f.title||f.content||'').trim()) rows.push(makeActivityRow(f.title||'',f.content||''));
+    }
+  }
 
-function buildDocx({date,data,tasks}){
-  const children=[
-    new Paragraph({
-      children:[tx('承邦有限公司',true,30)],
-      alignment:AlignmentType.CENTER,
-      spacing:{after:60}
-    }),
-    new Paragraph({
-      children:[tx('客服工作日報表',true,28)],
-      alignment:AlignmentType.CENTER,
-      spacing:{after:180}
-    }),
-    new Paragraph({
-      children:[tx('日期：'+date+'　客服：'+(data.author||''),true,22)],
-      spacing:{after:240}
-    }),
-    new Paragraph({children:[tx('上午 0830-1200',true,24)],spacing:{after:100}})
-  ];
+  rows.push(makeSectionRow('業務工廠回覆'));
+  if(data.businessReply){
+    rows.push(new TableRow({
+      cantSplit:true,
+      children:[cell(lines(data.businessReply).map(x=>p(x,false,false)),{columnSpan:3})]
+    }));
+  }
 
-  lines(data.morningTasks).forEach(v=>children.push(
-    new Paragraph({children:[tx('• '+v,false,21)],spacing:{after:60}})
-  ));
-
-  children.push(new Paragraph({
-    children:[tx('下午 1300-1730',true,24)],
-    spacing:{before:180,after:100}
+  rows.push(new TableRow({
+    cantSplit:true,
+    children:[cell(p('客服: '+(data.author||''),false,false),{columnSpan:3})]
   }));
-
-  lines(data.afternoonTasks).forEach(v=>children.push(
-    new Paragraph({children:[tx('• '+v,false,21)],spacing:{after:60}})
-  ));
-
-  children.push(new Paragraph({
-    children:[tx('工作細項',true,24)],
-    spacing:{before:220,after:100}
-  }));
-
-  const detailRows=[
-    new TableRow({children:[cell('工作項目',true),cell('詳細說明',true)]}),
-    ...tasks.map(t=>new TableRow({
-      children:[cell(t,true),cell(data.taskDetailsMap?.[t]||'')]
-    }))
-  ];
-  children.push(new Table({
-    rows:detailRows,
-    width:{size:100,type:WidthType.PERCENTAGE}
-  }));
-
-  children.push(new Paragraph({
-    children:[tx('工廠聯繫進度',true,24)],
-    spacing:{before:220,after:100}
-  }));
-
-  const factoryRows=[
-    new TableRow({children:[cell('聯繫標題',true),cell('進度說明',true)]}),
-    ...(data.factoryDetails||[]).map(f=>new TableRow({
-      children:[cell(f.title||''),cell(f.content||'')]
-    }))
-  ];
-  children.push(new Table({
-    rows:factoryRows,
-    width:{size:100,type:WidthType.PERCENTAGE}
-  }));
-
-  children.push(new Paragraph({
-    children:[tx('業務工廠回覆',true,24)],
-    spacing:{before:220,after:100}
-  }));
-
-  lines(data.businessReply).forEach(v=>children.push(
-    new Paragraph({children:[tx(v,false,21)],spacing:{after:60}})
-  ));
 
   return new Document({
     styles:{
       default:{
         document:{
-          run:{font:{name:FONT,eastAsia:FONT},size:22}
+          run:{font:{name:FONT,eastAsia:FONT,ascii:FONT,hAnsi:FONT},size:22}
         }
       }
     },
     sections:[{
       properties:{
-        page:{margin:{top:720,right:720,bottom:720,left:720}}
+        page:{
+          margin:{top:720,right:720,bottom:720,left:720}
+        }
       },
-      children
+      children:[
+        new Table({
+          width:{size:100,type:WidthType.PERCENTAGE},
+          columnWidths:[10,15,75],
+          rows
+        })
+      ]
     }]
   });
-}
-
-function buildWordHtml({date,data,tasks}){
-  const esc=(v)=>String(v??'')
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
-
-  const list=(v)=>lines(v).map(x=>'<p>• '+esc(x)+'</p>').join('');
-  const details=tasks.map(t=>
-    '<tr><td><b>'+esc(t)+'</b></td><td>'+esc(data.taskDetailsMap?.[t]||'').replace(/\n/g,'<br>')+'</td></tr>'
-  ).join('');
-  const factory=(data.factoryDetails||[]).map(f=>
-    '<tr><td>'+esc(f.title||'')+'</td><td>'+esc(f.content||'').replace(/\n/g,'<br>')+'</td></tr>'
-  ).join('');
-
-  return `<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-<meta charset="utf-8">
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title>承邦客服日報 ${esc(date)}</title>
-<style>
-body{font-family:"Microsoft JhengHei","Noto Sans TC",Arial,sans-serif;font-size:14pt;line-height:1.5;margin:24px;color:#111}
-h1{text-align:center;font-size:24pt;margin:0 0 4px}
-h2{text-align:center;font-size:20pt;margin:0 0 18px}
-h3{font-size:16pt;margin:20px 0 8px}
-p{margin:5px 0}
-table{border-collapse:collapse;width:100%;margin:8px 0 18px}
-td,th{border:1px solid #999;padding:8px;vertical-align:top}
-th{font-weight:bold}
-.meta{font-weight:bold;margin-bottom:16px}
-</style>
-</head>
-<body>
-<h1>承邦有限公司</h1>
-<h2>客服工作日報表</h2>
-<div class="meta">日期：${esc(date)}　客服：${esc(data.author||'')}</div>
-<h3>上午 0830-1200</h3>
-${list(data.morningTasks)}
-<h3>下午 1300-1730</h3>
-${list(data.afternoonTasks)}
-<h3>工作細項</h3>
-<table><tr><th>工作項目</th><th>詳細說明</th></tr>${details}</table>
-<h3>工廠聯繫進度</h3>
-<table><tr><th>聯繫標題</th><th>進度說明</th></tr>${factory}</table>
-<h3>業務工廠回覆</h3>
-${list(data.businessReply)}
-</body>
-</html>`;
 }
 
 function downloadBlob(blob,filename){
@@ -184,7 +163,7 @@ async function shareOrDownload(blob,filename,type){
     try{
       const can=navigator.canShare ? navigator.canShare({files:[file]}) : false;
       if(can){
-        await navigator.share({files:[file],title:filename,text:'承邦客服日報 Word'});
+        await navigator.share({files:[file],title:filename,text:'承邦客服工作日誌'});
         return;
       }
     }catch(e){
@@ -195,24 +174,13 @@ async function shareOrDownload(blob,filename,type){
 }
 
 export async function exportWord({date,data,tasks}){
-  const safeAuthor=(data.author||'未填寫').replace(/[\\/:*?"<>|]/g,'_');
-  const baseName='承邦客服日報_'+date+'_'+safeAuthor;
-
-  try{
-    const doc=buildDocx({date,data,tasks});
-    const blob=await Packer.toBlob(doc);
-    const filename=baseName+'.docx';
-    await shareOrDownload(
-      blob,
-      filename,
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    );
-    return {filename,blob,format:'docx'};
-  }catch(primaryError){
-    const html=buildWordHtml({date,data,tasks});
-    const blob=new Blob(['\\ufeff',html],{type:'application/msword;charset=utf-8'});
-    const filename=baseName+'.doc';
-    await shareOrDownload(blob,filename,'application/msword');
-    return {filename,blob,format:'doc'};
-  }
+  const filename=fileDate(date)+'工作日誌.docx';
+  const doc=buildTemplateDoc({date,data,tasks});
+  const blob=await Packer.toBlob(doc);
+  await shareOrDownload(
+    blob,
+    filename,
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  );
+  return {filename,blob,format:'docx'};
 }
