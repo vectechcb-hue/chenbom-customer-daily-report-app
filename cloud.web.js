@@ -1,10 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, deleteApp } from 'firebase/app';
 import { getAuth, signInAnonymously, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore, collection, doc, setDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
 
 const CONFIG_KEY='chenbom_firebase_config_v1';
-let appInstance=null, authInstance=null, dbInstance=null, currentUid=null;
+let appInstance=null, authInstance=null, dbInstance=null, currentUid=null, currentConfigKey=null;
 
 function cleanConfig(input){
   if(typeof input === 'string'){
@@ -20,8 +20,11 @@ function cleanConfig(input){
 
 async function init(config){
   const cfg=cleanConfig(config);
-  if(!appInstance){
-    appInstance=getApps().length ? getApp() : initializeApp(cfg);
+  const nextKey=JSON.stringify(cfg);
+  if(!appInstance || currentConfigKey!==nextKey){
+    if(appInstance){ try{ await deleteApp(appInstance); }catch(_){} }
+    appInstance=initializeApp(cfg);
+    currentConfigKey=nextKey;
     authInstance=getAuth(appInstance);
     dbInstance=getFirestore(appInstance);
     try{ await setPersistence(authInstance,browserLocalPersistence); }catch(_){}
