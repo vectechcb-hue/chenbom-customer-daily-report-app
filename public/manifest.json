@@ -1,0 +1,10 @@
+{
+  "name": "承邦客服日報",
+  "short_name": "承邦日報",
+  "start_url": "/chenbom-customer-daily-report-app/",
+  "scope": "/chenbom-customer-daily-report-app/",
+  "display": "standalone",
+  "background_color": "#f3f4f6",
+  "theme_color": "#111827",
+  "lang": "zh-TW"
+}
