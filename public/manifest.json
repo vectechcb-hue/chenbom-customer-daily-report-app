@@ -9,16 +9,10 @@
   "lang": "zh-TW",
   "icons": [
     {
-      "src": "/chenbom-customer-daily-report-app/icon-192.webp",
-      "sizes": "192x192",
+      "src": "/chenbom-customer-daily-report-app/icon.webp",
+      "sizes": "256x256",
       "type": "image/webp",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/chenbom-customer-daily-report-app/icon-512.webp",
-      "sizes": "512x512",
-      "type": "image/webp",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
