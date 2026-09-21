@@ -32,7 +32,7 @@ App 支援 Firebase Authentication 的匿名登入與 Cloud Firestore。
 - `users/{uid}/export_history/{exportId}`
 
 請先建立 Firebase Web App、啟用 Anonymous Authentication 與 Cloud Firestore，再把 Firebase Web App 的設定 JSON 貼到 App 的「雲端記憶」設定區。
-Firestore 安全規則已附在 `firestore.rules。
+Firestore 安全規則已附在 `firestore.rules`。
 
 Firebase 目前提供 Spark 免付費方案；Cloud Firestore 有每日免費配額，適合個人日報使用。
 
