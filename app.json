@@ -9,7 +9,7 @@
     "ios": {"bundleIdentifier": "tw.cbtrade.customerdailyreport"},
     "web": {
       "bundler": "metro",
-      "output": "static",
+      "output": "single",
       "name": "承邦客服日報",
       "shortName": "承邦日報",
       "display": "standalone",
