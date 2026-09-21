@@ -7,6 +7,18 @@
     "userInterfaceStyle": "light",
     "android": {"package": "tw.cbtrade.customerdailyreport"},
     "ios": {"bundleIdentifier": "tw.cbtrade.customerdailyreport"},
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "name": "承邦客服日報",
+      "shortName": "承邦日報",
+      "display": "standalone",
+      "themeColor": "#111827",
+      "backgroundColor": "#f3f4f6"
+    },
+    "experiments": {
+      "baseUrl": "/chenbom-customer-daily-report-app"
+    },
     "plugins": []
   }
 }
