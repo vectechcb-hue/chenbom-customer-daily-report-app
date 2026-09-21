@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {exportWord} from './wordExport';
 import {
   loadCloudConfig, configureCloud, syncReport, loadReportsFromCloud,
-  saveExportRecord, loadExportRecordsFromCloud, hasCloudConfig
+  saveExportRecord, loadExportRecordsFromCloud, deleteExportRecord, hasCloudConfig
 } from './cloud';
 
 const KEY='chenbom_daily_reports_v2';
@@ -141,7 +141,7 @@ export default function App(){
     }
   };
 
-  const connectCloud=async()=>{
+  const deleteHistoryItem=async(item)=>{\n    const remove=async()=>{\n      const nextHistory=history.filter(x=>String(x.id)!==String(item.id));\n      setHistory(nextHistory);\n      await AsyncStorage.setItem(HISTORY_KEY,JSON.stringify(nextHistory));\n      try{\n        if(await hasCloudConfig()) await deleteExportRecord(item.id);\n      }catch(_){}\n    };\n    Alert.alert('刪除匯出紀錄','確定刪除「'+(item.filename||'這筆紀錄')+'」嗎？',[\n      {text:'取消'},\n      {text:'刪除',style:'destructive',onPress:()=>{remove().catch(()=>{});}}\n    ]);\n  };\n\n  const connectCloud=async()=>{
     try{
       const cfg=JSON.parse(cloudConfigText);
       await configureCloud(cfg);
@@ -221,6 +221,7 @@ export default function App(){
             setShowHistory(false);
           }}><Text style={s.smallBtnText}>調出</Text></Pressable>
           <Pressable style={s.smallBtn} onPress={()=>doExport(h.date,h.reportSnapshot||makeEmpty(),true)}><Text style={s.smallBtnText}>重出 Word</Text></Pressable>
+          <Pressable style={s.deleteHistoryBtn} onPress={()=>deleteHistoryItem(h)}><Text style={s.deleteHistoryText}>刪除</Text></Pressable>
         </View>)}
       </View>}
 
@@ -326,5 +327,7 @@ const s=StyleSheet.create({
   historyTitle:{fontWeight:'800',color:'#111827'},
   historyMeta:{color:'#6b7280',fontSize:12,marginTop:3},
   smallBtn:{backgroundColor:'#eff6ff',borderRadius:8,paddingVertical:8,paddingHorizontal:9},
-  smallBtnText:{color:'#1d4ed8',fontWeight:'800',fontSize:12}
+  smallBtnText:{color:'#1d4ed8',fontWeight:'800',fontSize:12},
+  deleteHistoryBtn:{backgroundColor:'#fee2e2',borderRadius:8,paddingVertical:8,paddingHorizontal:9},
+  deleteHistoryText:{color:'#b91c1c',fontWeight:'800',fontSize:12}
 });
