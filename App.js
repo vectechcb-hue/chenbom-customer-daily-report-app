@@ -13,10 +13,11 @@ import {
 const KEY='chenbom_daily_reports_v2';
 const HISTORY_KEY='chenbom_word_export_history_v1';
 const CONFIG_KEY='chenbom_firebase_config_v1';
+const FIXED_AUTHOR='吳英德';
 
 const today=()=>new Date().toISOString().slice(0,10);
 const makeEmpty=()=>({
-  author:'吳英德',
+  author:FIXED_AUTHOR,
   morningTasks:'',
   afternoonTasks:'',
   taskDetailsMap:{},
@@ -121,7 +122,7 @@ export default function App(){
       const record={
         id:Date.now()+Math.floor(Math.random()*1000),
         date:reportDate,
-        author:report.author||'',
+        author:FIXED_AUTHOR,
         filename:result.filename,
         exportedAt:Date.now(),
         reportSnapshot:report,
@@ -236,7 +237,7 @@ export default function App(){
 
       <View style={s.card}>
         <Text style={s.label}>選擇日期</Text>
-        <TextInput style={s.date} value={date} onChangeText={loadDate} placeholder="YYYY-MM-DD"/>
+        {Platform.OS==='web' ? (\n          <input\n            type="date"\n            value={date}\n            onChange={e=>loadDate(e.target.value)}\n            aria-label="選擇日期"\n            style={{width:'100%',boxSizing:'border-box',border:'1px solid #2563eb',borderRadius:10,padding:'12px',fontSize:17,marginBottom:8,background:'#fff'}}\n          />\n        ) : (\n          <TextInput style={s.date} value={date} onChangeText={loadDate} placeholder="YYYY-MM-DD"/>\n        )}
         <Text style={s.label}>客服</Text>
         <TextInput style={s.input} value={data.author} onChangeText={v=>set('author',v)}/>
       </View>
