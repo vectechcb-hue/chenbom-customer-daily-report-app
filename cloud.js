@@ -4,4 +4,5 @@ export async function syncReport(){return false;}
 export async function loadReportsFromCloud(){return {};}
 export async function saveExportRecord(){return false;}
 export async function loadExportRecordsFromCloud(){return [];}
+export async function deleteExportRecord(){return false;}
 export async function hasCloudConfig(){return false;}
