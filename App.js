@@ -141,7 +141,21 @@ export default function App(){
     }
   };
 
-  const deleteHistoryItem=async(item)=>{\n    const remove=async()=>{\n      const nextHistory=history.filter(x=>String(x.id)!==String(item.id));\n      setHistory(nextHistory);\n      await AsyncStorage.setItem(HISTORY_KEY,JSON.stringify(nextHistory));\n      try{\n        if(await hasCloudConfig()) await deleteExportRecord(item.id);\n      }catch(_){}\n    };\n    Alert.alert('刪除匯出紀錄','確定刪除「'+(item.filename||'這筆紀錄')+'」嗎？',[\n      {text:'取消'},\n      {text:'刪除',style:'destructive',onPress:()=>{remove().catch(()=>{});}}\n    ]);\n  };\n\n  const connectCloud=async()=>{
+  const deleteHistoryItem=async(item)=>{
+    const remove=async()=>{
+      const nextHistory=history.filter(x=>String(x.id)!==String(item.id));
+      setHistory(nextHistory);
+      await AsyncStorage.setItem(HISTORY_KEY,JSON.stringify(nextHistory));
+      try{
+        if(await hasCloudConfig()) await deleteExportRecord(item.id);
+      }catch(_){}
+    };
+    Alert.alert('刪除匯出紀錄','確定刪除「'+(item.filename||'這筆紀錄')+'」嗎？',[
+      {text:'取消'},
+      {text:'刪除',style:'destructive',onPress:()=>{remove().catch(()=>{});}}
+    ]);
+  };
+  const connectCloud=async()=>{
     try{
       const cfg=JSON.parse(cloudConfigText);
       await configureCloud(cfg);
