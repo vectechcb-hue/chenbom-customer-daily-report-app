@@ -231,7 +231,7 @@ export default function App(){
           <Pressable style={s.primaryBtn} onPress={connectCloud}><Text style={s.btnText}>連線並同步</Text></Pressable>
           <Pressable style={s.secondaryBtn} onPress={refreshCloud}><Text style={s.secondaryText}>從雲端更新</Text></Pressable>
         </View>
-        <Text style={s.tip}>Firebase 官方目前提供 Spark 免付費方案；Cloud Firestore 有免費配額，適合這種個人日報資料量。citeturn531600search1turn531600search10</Text>
+        <Text style={s.tip}>Firebase 提供免付費 Spark 方案；Cloud Firestore 也有免費配額，適合這種個人日報資料量。</Text>
       </View>}
 
       <View style={s.card}>
