@@ -23,7 +23,6 @@
     "experiments": {
       "baseUrl": "/chenbom-customer-daily-report-app"
     },
-    "plugins": [],
-    "icon": "./public/icon-512.webp"
+    "plugins": []
   }
 }
