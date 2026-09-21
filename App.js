@@ -237,9 +237,19 @@ export default function App(){
 
       <View style={s.card}>
         <Text style={s.label}>選擇日期</Text>
-        {Platform.OS==='web' ? (\n          <input\n            type="date"\n            value={date}\n            onChange={e=>loadDate(e.target.value)}\n            aria-label="選擇日期"\n            style={{width:'100%',boxSizing:'border-box',border:'1px solid #2563eb',borderRadius:10,padding:'12px',fontSize:17,marginBottom:8,background:'#fff'}}\n          />\n        ) : (\n          <TextInput style={s.date} value={date} onChangeText={loadDate} placeholder="YYYY-MM-DD"/>\n        )}
+        {Platform.OS==='web' ? (
+          <input
+            type="date"
+            value={date}
+            onChange={e=>loadDate(e.target.value)}
+            aria-label="選擇日期"
+            style={{width:'100%',boxSizing:'border-box',border:'1px solid #2563eb',borderRadius:10,padding:'12px',fontSize:17,marginBottom:8,background:'#fff'}}
+          />
+        ) : (
+          <TextInput style={s.date} value={date} onChangeText={loadDate} placeholder="YYYY-MM-DD"/>
+        )}
         <Text style={s.label}>客服</Text>
-        <TextInput style={s.input} value={data.author} onChangeText={v=>set('author',v)}/>
+        <TextInput style={s.input} value={FIXED_AUTHOR} editable={false}/>
       </View>
 
       <Section title="上午 0830-1200">
