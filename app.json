@@ -5,8 +5,12 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "android": {"package": "tw.cbtrade.customerdailyreport"},
-    "ios": {"bundleIdentifier": "tw.cbtrade.customerdailyreport"},
+    "android": {
+      "package": "tw.cbtrade.customerdailyreport"
+    },
+    "ios": {
+      "bundleIdentifier": "tw.cbtrade.customerdailyreport"
+    },
     "web": {
       "bundler": "metro",
       "output": "single",
@@ -19,6 +23,7 @@
     "experiments": {
       "baseUrl": "/chenbom-customer-daily-report-app"
     },
-    "plugins": []
+    "plugins": [],
+    "icon": "./public/icon-512.webp"
   }
 }
