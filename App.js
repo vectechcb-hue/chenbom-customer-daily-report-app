@@ -123,17 +123,41 @@ export default function App(){
   };
 
   const applyLastExport=()=>{
-    const last=history.find(h=>h&&h.reportSnapshot);
-    if(!last){
-      Alert.alert('目前沒有上次報表','先匯出一份 Word 後，就可以每天直接沿用上一份報表。');
+    // 優先使用最近一次 Word 匯出的快照；若舊版本沒有匯出紀錄，
+    // 就退回抓「目前日期以前最近一份已儲存日報」，避免按鈕看起來沒有反應。
+    const lastExport=history.find(h=>h&&h.reportSnapshot);
+    let source=lastExport?.reportSnapshot ? {
+      date:lastExport.date,
+      data:lastExport.reportSnapshot,
+      label:'上次匯出的 Word 報表'
+    } : null;
+
+    if(!source){
+      const previousDates=Object.keys(reports||{})
+        .filter(d=>d<date && reports[d])
+        .sort()
+        .reverse();
+      if(previousDates.length){
+        const d=previousDates[0];
+        source={date:d,data:reports[d],label:'上一份已儲存日報'};
+      }
+    }
+
+    if(!source){
+      Alert.alert('目前沒有可沿用的報表','請先完成並儲存一份前一天的日報，或先匯出一次 Word。');
       return;
     }
+
+    const copied=cloneReport(source.data);
     Alert.alert(
       '沿用上次報表',
-      '要把 '+last.date+' 匯出的報表內容帶入 '+date+' 嗎？\n\n日期會維持你目前選擇的 '+date+'，你只需要修改今天有變動的內容。',
+      '已找到 '+source.date+' 的'+source.label+'。\n\n要把內容帶入 '+date+' 嗎？\n日期會維持 '+date+'，你只需要修改今天有變動的內容。',
       [
         {text:'取消'},
-        {text:'沿用',onPress:()=>setData(cloneReport(last.reportSnapshot))}
+        {text:'沿用',onPress:()=>{
+          setData(copied);
+          setShowHistory(false);
+        }}
       ]
     );
   };
