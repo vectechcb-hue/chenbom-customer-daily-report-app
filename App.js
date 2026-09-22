@@ -113,6 +113,31 @@ export default function App(){
     {text:'取消'},
     {text:'確定',onPress:()=>setData({...makeEmpty(),author:data.author})}
   ]);
+  const cloneReport=(source)=>{
+    const copy=JSON.parse(JSON.stringify(source||makeEmpty()));
+    copy.author=FIXED_AUTHOR;
+    copy._updatedAt=Date.now();
+    copy.factoryDetails=(copy.factoryDetails||[{id:Date.now(),title:'',content:''}]).map((x,i)=>({...x,id:Date.now()+i}));
+    copy.taskDetailsMap={...(copy.taskDetailsMap||{})};
+    return copy;
+  };
+
+  const applyLastExport=()=>{
+    const last=history.find(h=>h&&h.reportSnapshot);
+    if(!last){
+      Alert.alert('目前沒有上次報表','先匯出一份 Word 後，就可以每天直接沿用上一份報表。');
+      return;
+    }
+    Alert.alert(
+      '沿用上次報表',
+      '要把 '+last.date+' 匯出的報表內容帶入 '+date+' 嗎？\n\n日期會維持你目前選擇的 '+date+'，你只需要修改今天有變動的內容。',
+      [
+        {text:'取消'},
+        {text:'沿用',onPress:()=>setData(cloneReport(last.reportSnapshot))}
+      ]
+    );
+  };
+
 
   const doExport=async(reportDate= date, reportData=data, fromHistory=false)=>{
     try{
@@ -218,6 +243,7 @@ export default function App(){
       <View style={s.actionBar}>
         <Pressable style={s.primaryBtn} onPress={()=>doExport()}><Text style={s.btnText}>📄 匯出 Word</Text></Pressable>
         <Pressable style={s.secondaryBtn} onPress={()=>setShowHistory(v=>!v)}><Text style={s.secondaryText}>📚 匯出紀錄</Text></Pressable>
+        <Pressable style={s.reuseBtn} onPress={applyLastExport}><Text style={s.reuseText}>🔄 沿用上次報表</Text></Pressable>
         <Pressable style={s.secondaryBtn} onPress={()=>setShowCloud(v=>!v)}><Text style={s.secondaryText}>☁️ 雲端記憶</Text></Pressable>
       </View>
 
@@ -317,6 +343,8 @@ const s=StyleSheet.create({
   secondaryBtn:{backgroundColor:'#e5e7eb',paddingVertical:12,paddingHorizontal:14,borderRadius:10,alignItems:'center'},
   btnText:{color:'#fff',fontWeight:'800'},
   secondaryText:{color:'#111827',fontWeight:'800'},
+  reuseBtn:{backgroundColor:'#dcfce7',paddingVertical:12,paddingHorizontal:14,borderRadius:10,alignItems:'center'},
+  reuseText:{color:'#166534',fontWeight:'800'},
   card:{backgroundColor:'#fff',padding:16,borderRadius:16,marginBottom:12,elevation:2},
   label:{fontWeight:'700',marginBottom:6,marginTop:6},
   date:{borderWidth:1,borderColor:'#2563eb',borderRadius:10,padding:12,fontSize:17,marginBottom:8},
