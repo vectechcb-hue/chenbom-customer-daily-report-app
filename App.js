@@ -184,18 +184,25 @@ export default function App(){
   };
 
   const deleteHistoryItem=async(item)=>{
-    const remove=async()=>{
+    try{
+      const filename=item?.filename||'這筆紀錄';
+      const confirmed = typeof window !== 'undefined' && typeof window.confirm === 'function'
+        ? window.confirm('確定要刪除「'+filename+'」嗎？')
+        : true;
+      if(!confirmed) return;
+
       const nextHistory=history.filter(x=>String(x.id)!==String(item.id));
       setHistory(nextHistory);
       await AsyncStorage.setItem(HISTORY_KEY,JSON.stringify(nextHistory));
+
       try{
         if(await hasCloudConfig()) await deleteExportRecord(item.id);
       }catch(_){}
-    };
-    Alert.alert('刪除匯出紀錄','確定刪除「'+(item.filename||'這筆紀錄')+'」嗎？',[
-      {text:'取消'},
-      {text:'刪除',style:'destructive',onPress:()=>{remove().catch(()=>{});}}
-    ]);
+
+      setCloudStatus('🗑️ 已刪除匯出紀錄');
+    }catch(err){
+      setCloudStatus('⚠️ 刪除失敗');
+    }
   };
   const connectCloud=async()=>{
     try{
