@@ -12,6 +12,7 @@ import {
 
 const KEY='chenbom_daily_reports_v2';
 const HISTORY_KEY='chenbom_word_export_history_v1';
+const LAST_TEMPLATE_KEY='chenbom_last_report_template_v1';
 const CONFIG_KEY='chenbom_firebase_config_v1';
 const FIXED_AUTHOR='吳英德';
 
@@ -33,6 +34,7 @@ export default function App(){
   const [reports,setReports]=useState({});
   const [data,setData]=useState(makeEmpty());
   const [history,setHistory]=useState([]);
+  const [lastTemplate,setLastTemplate]=useState(null);
   const [historyQuery,setHistoryQuery]=useState('');
   const [cloudConfigText,setCloudConfigText]=useState('');
   const [cloudStatus,setCloudStatus]=useState('本機記憶');
@@ -47,9 +49,12 @@ export default function App(){
         const local=raw?JSON.parse(raw):{};
         const rawHistory=await AsyncStorage.getItem(HISTORY_KEY);
         const localHistory=rawHistory?JSON.parse(rawHistory):[];
+        const rawLastTemplate=await AsyncStorage.getItem(LAST_TEMPLATE_KEY);
+        const localLastTemplate=rawLastTemplate?JSON.parse(rawLastTemplate):null;
         setReports(local);
         setData(local[date]||makeEmpty());
         setHistory(localHistory);
+        setLastTemplate(localLastTemplate);
         const cfg=await loadCloudConfig();
         if(cfg){
           setCloudConfigText(JSON.stringify(cfg,null,2));
@@ -122,46 +127,31 @@ export default function App(){
     return copy;
   };
 
-  const applyLastExport=()=>{
-    // 優先使用最近一次 Word 匯出的快照；若舊版本沒有匯出紀錄，
-    // 就退回抓「目前日期以前最近一份已儲存日報」，避免按鈕看起來沒有反應。
-    const lastExport=history.find(h=>h&&h.reportSnapshot);
-    let source=lastExport?.reportSnapshot ? {
-      date:lastExport.date,
-      data:lastExport.reportSnapshot,
-      label:'上次匯出的 Word 報表'
-    } : null;
-
-    if(!source){
-      const previousDates=Object.keys(reports||{})
-        .filter(d=>d<date && reports[d])
-        .sort()
-        .reverse();
-      if(previousDates.length){
-        const d=previousDates[0];
-        source={date:d,data:reports[d],label:'上一份已儲存日報'};
+  const applyLastExport=async()=>{
+    try{
+      let source=lastTemplate?.data ? lastTemplate : null;
+      if(!source){
+        const last=history.find(h=>h&&h.reportSnapshot);
+        if(last) source={date:last.date,data:last.reportSnapshot};
       }
+      if(!source){
+        const previousDates=Object.keys(reports||{}).filter(d=>d<date&&reports[d]).sort().reverse();
+        if(previousDates.length){
+          const d=previousDates[0];
+          source={date:d,data:reports[d]};
+        }
+      }
+      if(!source){
+        setCloudStatus('⚠️ 沒有可沿用的上一份報表');
+        return;
+      }
+      const copied=cloneReport(source.data);
+      setData(copied);
+      setCloudStatus('✅ 已沿用 '+source.date+' 報表內容');
+    }catch(err){
+      setCloudStatus('⚠️ 沿用報表失敗');
     }
-
-    if(!source){
-      Alert.alert('目前沒有可沿用的報表','請先完成並儲存一份前一天的日報，或先匯出一次 Word。');
-      return;
-    }
-
-    const copied=cloneReport(source.data);
-    Alert.alert(
-      '沿用上次報表',
-      '已找到 '+source.date+' 的'+source.label+'。\n\n要把內容帶入 '+date+' 嗎？\n日期會維持 '+date+'，你只需要修改今天有變動的內容。',
-      [
-        {text:'取消'},
-        {text:'沿用',onPress:()=>{
-          setData(copied);
-          setShowHistory(false);
-        }}
-      ]
-    );
   };
-
 
   const doExport=async(reportDate= date, reportData=data, fromHistory=false)=>{
     try{
@@ -178,8 +168,11 @@ export default function App(){
         source:fromHistory?'history':'current'
       };
       const nextHistory=[record,...history].slice(0,200);
+      const template={date:reportDate,data:report};
       setHistory(nextHistory);
+      setLastTemplate(template);
       await AsyncStorage.setItem(HISTORY_KEY,JSON.stringify(nextHistory));
+      await AsyncStorage.setItem(LAST_TEMPLATE_KEY,JSON.stringify(template));
       try{
         await saveExportRecord(record);
         setCloudStatus('☁️ Word 匯出紀錄已同步');
